@@ -57,7 +57,7 @@ public class PurlyScript : MonoBehaviour
         {
             rotationInput = 1f;
         }
-        transform.Rotate(0f, rotationInput * rotationSpeed * Time.deltaTime, 0f);
+        transform.Rotate(0f, rotationInput * rotationSpeed * Time.deltaTime, 0f, Space.World);
     }
 
 
