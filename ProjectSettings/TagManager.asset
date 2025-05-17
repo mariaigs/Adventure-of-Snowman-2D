@@ -5,6 +5,19 @@ TagManager:
   serializedVersion: 3
   tags:
   - snowman
+  - balloon
+  - ball
+  - pause
+  - resume
+  - restart
+  - Wall
+  - balloon1
+  - balloon2
+  - balloon3
+  - balloon4
+  - Ground
+  - Waterfall
+  - ScoreText
   layers:
   - Default
   - TransparentFX
@@ -41,6 +54,9 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Effects
+    uniqueID: 2959322921
     locked: 0
   m_RenderingLayers:
   - Default

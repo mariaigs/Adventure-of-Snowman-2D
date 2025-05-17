@@ -1,65 +1,102 @@
 using UnityEngine;
-
+using System.Collections;
+using UnityEngine.SceneManagement;
 public class PurlyScript : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     [SerializeField]
-    private float moveSpeed = 5.0f; //speed for movement left right up and down
+    private float moveSpeed = 5.0f;
     [SerializeField]
-    private float rotationSpeed = 100.0f; //speed for rotation
+    private float jumpForce = 7.0f;
+    private Rigidbody2D rb;
+    private bool facingRightDirection = true;
+    private Animator animator;
+    public bool isGrounded = true;
+    private bool isLanding = false;
+    private bool jumpRequested = false;
 
-    //variables for movement and rotation 
-    private float translation = 0, rotation = 0;
-
+   
     void Start()
     {
-        Debug.Log("PurlyScript initialized.");
-        
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
-
-    // Update is called once per frame
     void Update()
     {
-        translation = moveSpeed * Time.deltaTime;
-        rotation = rotationSpeed * Time.deltaTime;
+        // Handle horizontal movement
+        float moveX = Input.GetAxis("Horizontal");
+        // Set isRunning parameter when moving horizontally
+        bool isMoving = Mathf.Abs(moveX) > 0.1f;
+        animator.SetBool("isRunning", isMoving);
+        // Handle Jump input
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            jumpRequested = true;
+            // Trigger jump animation sequence
+            animator.SetTrigger("takeof");
+            // Set isJumping to true to transition to the Jump state
+            animator.SetBool("isJumping", true);
 
-        //handle movement
-        // Move left (A key or Left Arrow)
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-        {
-            transform.Translate(Vector2.left * translation, Space.World);
-        }
+            if (AudioManager.instance != null)
+            {
+                AudioManager.instance.PlaySFX("Jump");
+            }
 
-        // Move right (D key or Right Arrow)
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-        {
-            transform.Translate(Vector2.right * translation, Space.World);
         }
+        // Flip the character based on movement direction
+        FlipPlayer(moveX);
+       
+    }
+    void FixedUpdate()
+    {
+        // Handle horizontal movement in FixedUpdate for physics
+        float moveX = Input.GetAxis("Horizontal");
+        rb.linearVelocity = new Vector2(moveX * moveSpeed, rb.linearVelocity.y);
 
-        // Move up (W key or Up Arrow)
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        if (jumpRequested && isGrounded)
         {
-            transform.Translate(Vector2.up * translation, Space.World);
+            // Apply jump force - keep horizontal velocity and add vertical force
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            isGrounded = false;
+            jumpRequested = false;
         }
+    }
+    void FlipPlayer(float moveX)
+    {
+        if (moveX > 0 && !facingRightDirection || moveX < 0 && facingRightDirection)
+        {
+            facingRightDirection = !facingRightDirection;
+            Vector3 theScale = transform.localScale;
+            theScale.x *= -1;
+            transform.localScale = theScale;
+        }
+    }
+    // Handle ground detection with collision
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
 
-        // Move down (S key or Down Arrow)
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-        {
-            transform.Translate(Vector2.down * translation, Space.World);
+            if (!isGrounded && AudioManager.instance != null)
+            {
+                AudioManager.instance.PlaySFX("WaterSplash");
+            }
+
+            isGrounded = true;
+            // Set isJumping to false to transition to land animation
+            animator.SetBool("isJumping", false);
+            // Start the landing sequence
+            StartCoroutine(HandleLanding());
         }
-        // Rotation around Y-axis (Q and E keys)
-        float rotationInput = 0f;
-        if (Input.GetKey(KeyCode.Q))
-        {
-            rotationInput = -1f;
-        }
-        else if (Input.GetKey(KeyCode.E))
-        {
-            rotationInput = 1f;
-        }
-        transform.Rotate(0f, rotationInput * rotationSpeed * Time.deltaTime, 0f, Space.World);
+    }
+    // Coroutine to handle the landing sequence
+    IEnumerator HandleLanding()
+    {
+        isLanding = true;
+        // Wait for the land animation to complete
+        // You may need to adjust this time to match your animation duration
+        yield return new WaitForSeconds(0.1f);
+        isLanding = false;
     }
 
-
+    
 }
-
